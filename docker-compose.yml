@@ -1,0 +1,64 @@
+services:
+
+  # ── PostGIS ──────────────────────────────────────────────────────────────────
+  postgis:
+    image: kartoza/postgis:16-3.4
+    container_name: biofrag_postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-biofrag}
+      POSTGRES_USER: ${POSTGRES_USER:-biofrag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biofrag_secret}
+      ALLOW_IP_RANGE: "0.0.0.0/0"
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER:-biofrag} -d ${POSTGRES_DB:-biofrag}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── GeoServer ────────────────────────────────────────────────────────────────
+  geoserver:
+    image: kartoza/geoserver:2.24.2
+    container_name: biofrag_geoserver
+    restart: unless-stopped
+    depends_on:
+      postgis:
+        condition: service_healthy
+    environment:
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_USER:-admin}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_PASSWORD:-geoserver}
+      GEOSERVER_DATA_DIR: /opt/geoserver/data_dir
+      INITIAL_MEMORY: 1G
+      MAXIMUM_MEMORY: 2G
+    ports:
+      - "8080:8080"
+    volumes:
+      - geoserver_data:/opt/geoserver/data_dir
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/geoserver/web/ | grep -q 200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── pgAdmin (optional, for DB inspection) ────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: biofrag_pgadmin
+    restart: unless-stopped
+    profiles: ["tools"]          # only starts with: docker compose --profile tools up
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@earthmetricsafrica.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgis
+
+volumes:
+  postgis_data:
+  geoserver_data:

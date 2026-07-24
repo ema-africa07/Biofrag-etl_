@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biofrag-etl"
+version = "0.1.0"
+description = "Biodiversity Fragmentation & Corridor Monitoring ETL — Earth-Metrics Africa"
+authors = [{ name = "Earth-Metrics Africa", email = "data@earthmetricsafrica.com" }]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+dependencies = [
+    # Spatial
+    "geopandas>=0.14",
+    "rasterio>=1.3",
+    "shapely>=2.0",
+    "pyproj>=3.6",
+    "fiona>=1.9",
+    "GeoAlchemy2>=0.14",
+    # Database
+    "psycopg2-binary>=2.9",
+    "sqlalchemy>=2.0",
+    # HTTP / APIs
+    "requests>=2.31",
+    "httpx>=0.26",
+    "tenacity>=8.2",          # retry logic
+    # Config & CLI
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "python-dotenv>=1.0",
+    "click>=8.1",
+    # Logging
+    "loguru>=0.7",
+    # Data
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "tqdm>=4.66",
+    # Reporting
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "pytest-mock>=3.12",
+    "responses>=0.24",        # mock HTTP
+    "black>=23",
+    "ruff>=0.1",
+    "mypy>=1.7",
+    "ipykernel>=6.27",
+]
+reporting = [
+    "weasyprint>=60",         # needs: brew install cairo pango on macOS
+]
+
+[project.scripts]
+biofrag = "biofrag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["biofrag*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+strict = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=biofrag --cov-report=term-missing -v"
