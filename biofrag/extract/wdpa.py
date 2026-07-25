@@ -143,6 +143,7 @@ class WDPAExtractor(BaseExtractor):
     ) -> gpd.GeoDataFrame:
         """Load from a local WDPA GeoPackage or Shapefile and clip to bbox."""
         logger.info(f"[WDPA] Loading from local file: {self.local_file}")
+        #local_file = Path("data/raw/")
 
         west, south, east, north = bbox
 

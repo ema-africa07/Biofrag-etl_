@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_road_geom ON raw.road_network USING GIST(geom);
 -- ─── PROCESSED TABLES ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS processed.habitat_patches (
     id              SERIAL PRIMARY KEY,
-    patch_id        UUID DEFAULT gen_random_uuid(),
+    patch_id        UUID DEFAULT gen_random_uuid() UNIQUE,  -- UNIQUE required for FK reference
     landcover_class INTEGER,
     landcover_label TEXT,
     area_ha         NUMERIC,
@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS processed.habitat_patches (
     created_at      TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_patches_geom ON processed.habitat_patches USING GIST(geom);
+CREATE INDEX IF NOT EXISTS idx_patches_patch_id ON processed.habitat_patches(patch_id);
 
 CREATE TABLE IF NOT EXISTS processed.fragmentation_metrics (
     id              SERIAL PRIMARY KEY,
@@ -139,8 +140,8 @@ CREATE INDEX IF NOT EXISTS idx_frag_geom ON processed.fragmentation_metrics USIN
 CREATE TABLE IF NOT EXISTS processed.corridors (
     id              SERIAL PRIMARY KEY,
     corridor_id     UUID DEFAULT gen_random_uuid(),
-    from_patch_id   UUID REFERENCES processed.habitat_patches(patch_id),
-    to_patch_id     UUID REFERENCES processed.habitat_patches(patch_id),
+    from_patch_id   UUID,  -- references habitat_patches.patch_id (no FK constraint for bulk load perf)
+    to_patch_id     UUID,  -- references habitat_patches.patch_id
     cost_distance   NUMERIC,
     width_m         NUMERIC,
     length_m        NUMERIC,
